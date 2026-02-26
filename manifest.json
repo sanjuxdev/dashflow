@@ -1,0 +1,18 @@
+{
+    "manifest_version": 3,
+    "name": "Glass Dashboard",
+    "version": "2.0",
+    "description": "A premium glassmorphism new tab dashboard with wallpapers, shortcuts, to-dos, weather, and focus timer.",
+    "chrome_url_overrides": {
+        "newtab": "newtab.html"
+    },
+    "permissions": [
+        "storage",
+        "unlimitedStorage",
+        "notifications"
+    ],
+    "host_permissions": [
+        "https://*/*",
+        "http://*/*"
+    ]
+}
