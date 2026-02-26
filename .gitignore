@@ -1,0 +1,10 @@
+# Agent/IDE configs
+.agent/
+.vscode/
+
+# Temporary files
+icons/icon.svg
+
+# OS files
+Thumbs.db
+.DS_Store

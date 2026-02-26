@@ -1,0 +1,84 @@
+Contributing to Glass Dashboard
+
+Thank you for your interest in contributing to Glass Dashboard! Every
+contribution matters — whether it's fixing a bug, improving the UI, or
+suggesting a new feature.
+
+
+How to Contribute
+
+1. Fork and Clone
+
+   git clone https://github.com/<your-username>/Ex-tension_for_chrome.git
+   cd Ex-tension_for_chrome
+
+2. Create a Branch
+
+   git checkout -b feature/your-feature-name
+
+   Use a descriptive branch name, for example:
+     - feature/add-pomodoro-sounds
+     - fix/light-mode-search-bar
+     - docs/update-readme
+
+3. Make Your Changes
+
+   Keep changes focused — one feature or fix per pull request.
+   Follow the existing code style (vanilla HTML, CSS, JS — no frameworks).
+
+   Test your changes by loading the extension in Chrome:
+     a. Go to chrome://extensions/
+     b. Enable Developer Mode (top-right toggle)
+     c. Click "Load unpacked" and select the project folder
+     d. Open a new tab to verify your changes
+
+4. Commit with a Clear Message
+
+   git commit -m "feat: add notification sound to focus timer"
+
+   Follow Conventional Commits format:
+     feat:      New feature
+     fix:       Bug fix
+     docs:      Documentation changes
+     style:     CSS / formatting (no logic changes)
+     refactor:  Code restructuring
+
+5. Push and Open a Pull Request
+
+   git push origin feature/your-feature-name
+
+   Then open a PR on GitHub with:
+     - A clear title describing the change
+     - Screenshots if it is a visual change
+     - A link to the related issue (if any)
+
+
+Ideas for Contributions
+
+   UI          New themes, animations, glassmorphism effects
+   Widgets     Pomodoro sounds, habit tracker, notes widget
+   i18n        Translate to other languages
+   A11y        Improve keyboard navigation and screen reader support
+   Responsive  Better tablet and small screen layouts
+   Bugs        Check the Issues tab on GitHub
+
+
+Please Don't
+
+   - Add heavy frameworks (React, Vue, Tailwind) — this project
+     intentionally uses vanilla HTML/CSS/JS
+   - Make large, sweeping changes without opening an issue first
+   - Submit auto-generated or AI-only PRs without reviewing them
+
+
+Code of Conduct
+
+Be respectful and constructive. We are all here to learn and build
+cool things.
+
+
+License
+
+By contributing, you agree that your contributions will be licensed
+under the same MIT License that covers this project. See the LICENSE
+file for details.
