@@ -447,7 +447,7 @@ Please read [CONTRIBUTING](./CONTRIBUTING) for the full guidelines. The short ve
 
 ## Author
 
-**Sanjay**
+**Sanjay S**
 
 Engineering student & indie developer
 
