@@ -448,6 +448,7 @@ Please read [CONTRIBUTING](./CONTRIBUTING) for the full guidelines. The short ve
 ## Author
 
 **Sanjay**
+
 Engineering student & indie developer
 
 - 🔗 [LinkedIn](https://linkedin.com/in/sanjuxdev)
