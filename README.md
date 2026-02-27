@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✦ DashFlow
+#  DashFlow
 ### Custom Widget Dashboard — A Chrome Extension
 
 **A premium glassmorphism new tab experience that puts you in control.**  
