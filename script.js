@@ -106,6 +106,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("timer-start").addEventListener("click", startTimer);
   document.getElementById("timer-pause").addEventListener("click", pauseTimer);
   document.getElementById("timer-reset").addEventListener("click", resetTimer);
+  initTimer();
+
+  // Cross-tab timer sync
+  window.addEventListener("storage", (e) => {
+    if (e.key === "timerState" || e.key === "timerEndTime" || e.key === "timerRemaining") {
+      syncTimerFromStorage();
+    }
+  });
 
   // Theme toggle
   document
@@ -792,6 +800,9 @@ async function resetAll() {
   localStorage.removeItem("widgetPositions");
   localStorage.removeItem("layoutVersion");
   localStorage.removeItem("greetingName");
+  localStorage.removeItem("timerState");
+  localStorage.removeItem("timerEndTime");
+  localStorage.removeItem("timerRemaining");
   try {
     await clearWallpaperDB();
   } catch (e) {}
@@ -869,71 +880,186 @@ function getWeatherInfo(code) {
   return map[code] || { icon: "🌡️", condition: "Unknown" };
 }
 
-/* ========== Focus Timer ========== */
+/* ========== Focus Timer (Persistent Across Tabs) ========== */
 let timerInterval = null;
 let timerSeconds = 25 * 60;
+const TIMER_DURATION = 25 * 60; // 25 minutes in seconds
 
 function updateTimerDisplay() {
-  document.getElementById("timer-minutes").textContent = String(
-    Math.floor(timerSeconds / 60),
-  ).padStart(2, "0");
-  document.getElementById("timer-seconds").textContent = String(
-    timerSeconds % 60,
-  ).padStart(2, "0");
+  const mins = Math.max(0, Math.floor(timerSeconds / 60));
+  const secs = Math.max(0, timerSeconds % 60);
+  document.getElementById("timer-minutes").textContent = String(mins).padStart(2, "0");
+  document.getElementById("timer-seconds").textContent = String(secs).padStart(2, "0");
 }
 
-function startTimer() {
-  if (timerInterval) return;
-  document.getElementById("timer-start").disabled = true;
-  document.getElementById("timer-pause").disabled = false;
-  timerInterval = setInterval(() => {
-    timerSeconds--;
+function updateTimerButtons(state) {
+  const startBtn = document.getElementById("timer-start");
+  const pauseBtn = document.getElementById("timer-pause");
+  if (state === "running") {
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+  } else {
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+  }
+}
+
+/* -- Initialize timer from localStorage on page load -- */
+function initTimer() {
+  const state = localStorage.getItem("timerState");
+
+  if (state === "running") {
+    const endTime = parseInt(localStorage.getItem("timerEndTime"), 10);
+    const remaining = Math.round((endTime - Date.now()) / 1000);
+
+    if (remaining > 0) {
+      timerSeconds = remaining;
+      updateTimerDisplay();
+      updateTimerButtons("running");
+      startTickInterval();
+    } else {
+      // Timer expired while no tab was open
+      timerSeconds = 0;
+      updateTimerDisplay();
+      updateTimerButtons("idle");
+      clearTimerStorage();
+      onTimerComplete();
+    }
+  } else if (state === "paused") {
+    const remaining = parseInt(localStorage.getItem("timerRemaining"), 10);
+    timerSeconds = remaining > 0 ? remaining : TIMER_DURATION;
     updateTimerDisplay();
-    if (timerSeconds <= 0) {
+    updateTimerButtons("paused");
+  } else {
+    timerSeconds = TIMER_DURATION;
+    updateTimerDisplay();
+    updateTimerButtons("idle");
+  }
+}
+
+/* -- Cross-tab sync: called when another tab changes localStorage -- */
+function syncTimerFromStorage() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+
+  const state = localStorage.getItem("timerState");
+
+  if (state === "running") {
+    const endTime = parseInt(localStorage.getItem("timerEndTime"), 10);
+    const remaining = Math.round((endTime - Date.now()) / 1000);
+    if (remaining > 0) {
+      timerSeconds = remaining;
+      updateTimerDisplay();
+      updateTimerButtons("running");
+      startTickInterval();
+    } else {
+      timerSeconds = 0;
+      updateTimerDisplay();
+      updateTimerButtons("idle");
+      onTimerComplete();
+    }
+  } else if (state === "paused") {
+    const remaining = parseInt(localStorage.getItem("timerRemaining"), 10);
+    timerSeconds = remaining > 0 ? remaining : TIMER_DURATION;
+    updateTimerDisplay();
+    updateTimerButtons("paused");
+  } else {
+    timerSeconds = TIMER_DURATION;
+    updateTimerDisplay();
+    updateTimerButtons("idle");
+  }
+}
+
+/* -- Start the 1-second tick interval (drift-proof) -- */
+function startTickInterval() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const endTime = parseInt(localStorage.getItem("timerEndTime"), 10);
+    if (!endTime) {
       clearInterval(timerInterval);
       timerInterval = null;
-      document.getElementById("timer-start").disabled = false;
-      document.getElementById("timer-pause").disabled = true;
+      return;
+    }
+    const remaining = Math.round((endTime - Date.now()) / 1000);
+    timerSeconds = remaining;
+    updateTimerDisplay();
 
-      // Play completion chime using Web Audio API
-      playTimerChime();
-
-      // Pulse the timer display
-      const timerDisplay = document.querySelector(".timer-display");
-      if (timerDisplay) {
-        timerDisplay.classList.add("timer-complete-pulse");
-        setTimeout(() => timerDisplay.classList.remove("timer-complete-pulse"), 3000);
-      }
-
-      // Show in-page toast notification
-      showTimerToast("Focus session complete!", "Great work! Time to take a break. 🎉");
-
-      // Also attempt browser notification as a bonus
-      if (Notification.permission === "granted") {
-        new Notification("Focus Timer", {
-          body: "Session complete! Take a break.",
-        });
-      } else if (Notification.permission !== "denied") {
-        Notification.requestPermission();
-      }
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerSeconds = 0;
+      updateTimerDisplay();
+      updateTimerButtons("idle");
+      clearTimerStorage();
+      onTimerComplete();
     }
   }, 1000);
+}
+
+/* -- Timer completion handler -- */
+function onTimerComplete() {
+  playTimerChime();
+
+  const timerDisplay = document.querySelector(".timer-display");
+  if (timerDisplay) {
+    timerDisplay.classList.add("timer-complete-pulse");
+    setTimeout(() => timerDisplay.classList.remove("timer-complete-pulse"), 3000);
+  }
+
+  showTimerToast("Focus session complete!", "Great work! Time to take a break. 🎉");
+
+  if (Notification.permission === "granted") {
+    new Notification("Focus Timer", { body: "Session complete! Take a break." });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
+}
+
+/* -- Button handlers -- */
+function startTimer() {
+  if (timerInterval) return;
+  if (timerSeconds <= 0) timerSeconds = TIMER_DURATION;
+
+  const endTime = Date.now() + timerSeconds * 1000;
+  localStorage.setItem("timerEndTime", endTime.toString());
+  localStorage.setItem("timerState", "running");
+  localStorage.removeItem("timerRemaining");
+
+  updateTimerButtons("running");
+  startTickInterval();
 }
 
 function pauseTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
-  document.getElementById("timer-start").disabled = false;
-  document.getElementById("timer-pause").disabled = true;
+
+  // Recalculate remaining from endTime for accuracy
+  const endTime = parseInt(localStorage.getItem("timerEndTime"), 10);
+  if (endTime) {
+    timerSeconds = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+  }
+
+  localStorage.setItem("timerState", "paused");
+  localStorage.setItem("timerRemaining", timerSeconds.toString());
+  localStorage.removeItem("timerEndTime");
+
+  updateTimerDisplay();
+  updateTimerButtons("paused");
 }
 
 function resetTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
-  timerSeconds = 25 * 60;
+  timerSeconds = TIMER_DURATION;
+  clearTimerStorage();
   updateTimerDisplay();
-  document.getElementById("timer-start").disabled = false;
-  document.getElementById("timer-pause").disabled = true;
+  updateTimerButtons("idle");
+}
+
+function clearTimerStorage() {
+  localStorage.removeItem("timerState");
+  localStorage.removeItem("timerEndTime");
+  localStorage.removeItem("timerRemaining");
 }
 
 /* ========== Timer Toast Notification ========== */
