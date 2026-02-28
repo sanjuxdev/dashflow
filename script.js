@@ -894,13 +894,28 @@ function startTimer() {
       timerInterval = null;
       document.getElementById("timer-start").disabled = false;
       document.getElementById("timer-pause").disabled = true;
-      if (Notification.permission === "granted")
+
+      // Play completion chime using Web Audio API
+      playTimerChime();
+
+      // Pulse the timer display
+      const timerDisplay = document.querySelector(".timer-display");
+      if (timerDisplay) {
+        timerDisplay.classList.add("timer-complete-pulse");
+        setTimeout(() => timerDisplay.classList.remove("timer-complete-pulse"), 3000);
+      }
+
+      // Show in-page toast notification
+      showTimerToast("Focus session complete!", "Great work! Time to take a break. 🎉");
+
+      // Also attempt browser notification as a bonus
+      if (Notification.permission === "granted") {
         new Notification("Focus Timer", {
           body: "Session complete! Take a break.",
         });
-      else if (Notification.permission !== "denied")
+      } else if (Notification.permission !== "denied") {
         Notification.requestPermission();
-      alert("Focus session complete!");
+      }
     }
   }, 1000);
 }
@@ -919,4 +934,78 @@ function resetTimer() {
   updateTimerDisplay();
   document.getElementById("timer-start").disabled = false;
   document.getElementById("timer-pause").disabled = true;
+}
+
+/* ========== Timer Toast Notification ========== */
+function showTimerToast(title, message) {
+  // Remove any existing toast
+  const existing = document.getElementById("timer-toast");
+  if (existing) existing.remove();
+
+  const toast = document.createElement("div");
+  toast.id = "timer-toast";
+  toast.className = "timer-toast";
+  toast.innerHTML = `
+    <div class="timer-toast-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <div class="timer-toast-content">
+      <strong class="timer-toast-title">${title}</strong>
+      <span class="timer-toast-msg">${message}</span>
+    </div>
+    <button class="timer-toast-close" title="Dismiss">&times;</button>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Trigger slide-in animation
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      toast.classList.add("timer-toast-visible");
+    });
+  });
+
+  // Close button
+  toast.querySelector(".timer-toast-close").addEventListener("click", () => {
+    dismissToast(toast);
+  });
+
+  // Auto-dismiss after 8 seconds
+  setTimeout(() => dismissToast(toast), 8000);
+}
+
+function dismissToast(toast) {
+  if (!toast || !toast.parentNode) return;
+  toast.classList.remove("timer-toast-visible");
+  toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+  // Fallback removal
+  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 500);
+}
+
+/* ========== Timer Chime Sound ========== */
+function playTimerChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Play a pleasant two-tone chime
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.2);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * 0.2 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.2 + 0.8);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.2);
+      osc.stop(ctx.currentTime + i * 0.2 + 0.8);
+    });
+  } catch (e) {
+    // Web Audio not supported — fail silently
+  }
 }
