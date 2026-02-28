@@ -249,11 +249,24 @@ function loadTodos() {
   todos.forEach((todo, index) => {
     const li = document.createElement("li");
     li.className = `todo-item ${todo.completed ? "completed" : ""}`;
-    li.innerHTML = `
-            <div class="todo-check" onclick="toggleTodo(${index})"></div>
-            <span class="todo-text" onclick="toggleTodo(${index})">${todo.text}</span>
-            <button class="delete-btn" onclick="deleteTodo(${index})">&times;</button>
-        `;
+
+    const check = document.createElement("div");
+    check.className = "todo-check";
+    check.addEventListener("click", () => toggleTodo(index));
+
+    const text = document.createElement("span");
+    text.className = "todo-text";
+    text.textContent = todo.text;
+    text.addEventListener("click", () => toggleTodo(index));
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.innerHTML = "&times;";
+    deleteBtn.addEventListener("click", () => deleteTodo(index));
+
+    li.appendChild(check);
+    li.appendChild(text);
+    li.appendChild(deleteBtn);
     list.appendChild(li);
   });
 }
@@ -269,19 +282,19 @@ function addTodo() {
   loadTodos();
 }
 
-window.toggleTodo = function (index) {
+function toggleTodo(index) {
   const todos = JSON.parse(localStorage.getItem("todos")) || [];
   todos[index].completed = !todos[index].completed;
   localStorage.setItem("todos", JSON.stringify(todos));
   loadTodos();
-};
+}
 
-window.deleteTodo = function (index) {
+function deleteTodo(index) {
   const todos = JSON.parse(localStorage.getItem("todos")) || [];
   todos.splice(index, 1);
   localStorage.setItem("todos", JSON.stringify(todos));
   loadTodos();
-};
+}
 
 /* ========== Wallpaper ========== */
 async function handleWallpaperUpload(event) {
