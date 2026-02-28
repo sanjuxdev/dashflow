@@ -140,6 +140,27 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("hasRunBefore", "true");
     }, 1000);
   }
+
+  // Show "Customize Chrome" button after a reset
+  if (sessionStorage.getItem("showCustomizeChrome")) {
+    sessionStorage.removeItem("showCustomizeChrome");
+    const customizeBtn = document.getElementById("customize-chrome-btn");
+    if (customizeBtn) {
+      setTimeout(() => {
+        customizeBtn.classList.remove("hidden");
+      }, 500);
+
+      customizeBtn.addEventListener("click", () => {
+        // Open Chrome's appearance settings
+        window.open("chrome://settings/appearance", "_blank");
+      });
+
+      // Auto-hide after 8 seconds
+      setTimeout(() => {
+        customizeBtn.classList.add("hidden");
+      }, 8000);
+    }
+  }
 });
 
 /* ========== IndexedDB ========== */
@@ -774,6 +795,9 @@ async function resetAll() {
   try {
     await clearWallpaperDB();
   } catch (e) {}
+
+  // Set flag so "Customize Chrome" button appears after reload
+  sessionStorage.setItem("showCustomizeChrome", "true");
   window.location.reload();
 }
 
