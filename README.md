@@ -89,7 +89,7 @@ The core philosophy: **every element should be movable, hideable, and yours**. W
 
 🎥 **Want to see DashFlow in action?**  
 A full demo video is available on my LinkedIn profile — check it out here:  
-👉 [linkedin.com/in/sanjuxdev](https://linkedin.com/in/sanjuxdev)
+👉 [linkedin.com/in/sanjuxdev](https://www.linkedin.com/posts/sanjuxdev_buildinpublic-chromeextension-webdevelopment-activity-7433572266313183233-rB-7?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAE54ezEBrS2sLhlWdPCLoDmieWxKxMtNzQo)
 
 ---
 
